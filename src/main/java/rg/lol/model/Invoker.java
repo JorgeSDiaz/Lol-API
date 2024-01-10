@@ -1,5 +1,7 @@
 package rg.lol.model;
 
+import java.util.List;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -11,5 +13,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class Invoker {
     String id, accountId, puuid, name;
-    int profileIconId, summonerLevel;  
+    int profileIconId, summonerLevel;
+    List<String> matchesId; 
 }
