@@ -33,6 +33,18 @@ public class InvokersService {
         return lolPlayerDataRequest;
     }
 
+        public byte[] requestLolPlayerIcon(String nickname) {
+        Invoker lolPlayer = getLolPlayerDataByNickname(nickname);
+
+        byte[] lolPlayerIcon = dragonClient.get()
+                .uri("/13.24.1/img/profileicon/{iconId}.png", String.valueOf(lolPlayer.getProfileIconId()))
+                .retrieve()
+                .bodyToMono(byte[].class)
+                .block();
+
+        return lolPlayerIcon;
+    }
+
     public Invoker getLolPlayerDataByNickname(String nickname) {
         Map<String, Object> lolPlayerData = requestLolPlayerDataByNickname(nickname);
 
@@ -46,17 +58,5 @@ public class InvokersService {
                 .build();
 
         return lolPlayer;
-    }
-
-    public byte[] getLolPlayerIcon(String nickname) {
-        Invoker lolPlayer = getLolPlayerDataByNickname(nickname);
-
-        byte[] lolPlayerIcon = dragonClient.get()
-                .uri("/13.24.1/img/profileicon/{iconId}.png", String.valueOf(lolPlayer.getProfileIconId()))
-                .retrieve()
-                .bodyToMono(byte[].class)
-                .block();
-
-        return lolPlayerIcon;
     }
 }

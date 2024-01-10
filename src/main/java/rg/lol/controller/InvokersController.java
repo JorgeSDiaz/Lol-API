@@ -25,6 +25,6 @@ public class InvokersController {
 
     @GetMapping(value = "/player/icon/{nickname}", produces = MediaType.IMAGE_PNG_VALUE)
     public ResponseEntity<?> lolPlayerIcon(@PathVariable String nickname) {
-        return new ResponseEntity<>(invokersService.getLolPlayerIcon(nickname), HttpStatus.OK);
+        return new ResponseEntity<>(invokersService.requestLolPlayerIcon(nickname), HttpStatus.OK);
     }
 }
