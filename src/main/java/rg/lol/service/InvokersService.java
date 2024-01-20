@@ -25,6 +25,11 @@ public class InvokersService {
         this.dragonClient = WebClient.builder().baseUrl("http://ddragon.leagueoflegends.com/cdn").build();
     }
 
+    /**
+     * Request the player data from the Riot API
+     * @param nickname The nickname of the player
+     * @return A map with the player data
+     */
     public Map<String, Object> requestLolPlayerDataByNickname(String nickname) {
         Map<String, Object> lolPlayerDataRequest = oldRiotClient.get()
                 .uri("/summoner/v4/summoners/by-name/{nickname}", nickname)
@@ -35,7 +40,12 @@ public class InvokersService {
 
         return lolPlayerDataRequest;
     }
-
+    
+    /**
+     * Request the player icon from the Dragon API
+     * @param nickname The nickname of the player
+     * @return A byte array with the player icon
+     */
     public byte[] requestLolPlayerIcon(String nickname) {
         Invoker lolPlayer = getLolPlayerDataByNickname(nickname);
 
@@ -48,9 +58,30 @@ public class InvokersService {
         return lolPlayerIcon;
     }
 
+    /**
+     * Request the match data from the Riot API
+     * @param matchId The id of the match
+     * @return A map with the match data
+     */
+    public Map<String, Object> requestMatchDataByMatchId(String matchId) {
+        Map<String, Object> matchData = riotClient.get()
+                .uri("/match/v5/matches/{matchId}", matchId)
+                .header("X-Riot-Token", key)
+                .retrieve()
+                .bodyToMono(new ParameterizedTypeReference<Map<String, Object>>() {
+                }).block();
+
+        return matchData;
+    }
+
+    /**
+     * Request the matches id from the Riot API
+     * @param puuid The puuid of the player
+     * @return A list with the matches id
+     */
     public List<String> requestMatchesIdFromPlayerPUUID(String puuid) {
         List<String> matchesId = riotClient.get()
-                .uri("/match/v5/matches/by-puuid/{puuid}/ids", puuid)
+                .uri("/match/v5/matches/by-puuid/{puuid}/ids?start=0&count=1", puuid)
                 .header("X-Riot-Token", key)
                 .retrieve()
                 .bodyToMono(new ParameterizedTypeReference<List<String>>() {
@@ -59,9 +90,28 @@ public class InvokersService {
         return matchesId;
     }
 
+    /**
+     * Get the matches data from the Riot API
+     * @param puuid The puuid of the player
+     * @return A list with the matches data
+     */
+    public List<Map<String, Object>> getMatchesDataByPlayerPUUID(String puuid) {
+        List<String> matchesId = requestMatchesIdFromPlayerPUUID(puuid);
+        List<Map<String, Object>> matchesData = matchesId.stream()
+                .map(matchId -> requestMatchDataByMatchId(matchId))
+                .toList();
+
+        return matchesData;
+    }
+
+    /**
+     * Get the player data from the Riot API
+     * @param nickname The nickname of the player
+     * @return A Invoker object with the player data
+     */
     public Invoker getLolPlayerDataByNickname(String nickname) {
         Map<String, Object> lolPlayerData = requestLolPlayerDataByNickname(nickname);
-        List<String> matchesId = requestMatchesIdFromPlayerPUUID((String) lolPlayerData.get("puuid"));
+        List<Map<String, Object>> matches = getMatchesDataByPlayerPUUID((String) lolPlayerData.get("puuid"));
 
         Invoker lolPlayer = Invoker.builder()
                 .id((String) lolPlayerData.get("id"))
@@ -70,7 +120,7 @@ public class InvokersService {
                 .name((String) lolPlayerData.get("name"))
                 .profileIconId((int) lolPlayerData.get("profileIconId"))
                 .summonerLevel((int) lolPlayerData.get("summonerLevel"))
-                .matchesId(matchesId)
+                .matches(matches)
                 .build();
 
         return lolPlayer;
